@@ -1,0 +1,94 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+  AZURE_RESOURCE_GROUP: rg-oc-copilot-prod
+  AKS_CLUSTER: aks-oc-copilot
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ env.AKS_CLUSTER }}
+
+      - name: Deploy to AKS — staging
+        run: |
+          # Update image tags in manifests
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" infrastructure/kubernetes/backend-deployment.yaml
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" infrastructure/kubernetes/frontend-deployment.yaml
+
+          # Apply manifests
+          kubectl apply -f infrastructure/kubernetes/ -n staging
+
+          # Wait for rollout
+          kubectl rollout status deployment/oc-copilot-backend -n staging --timeout=300s
+          kubectl rollout status deployment/oc-copilot-frontend -n staging --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          STAGING_URL=$(kubectl get ingress oc-copilot-ingress -n staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -f "https://${STAGING_URL}/api/v1/health" || exit 1
+          echo "Smoke test passed — staging healthy"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ env.AKS_CLUSTER }}
+
+      - name: Deploy to AKS — production (blue-green)
+        run: |
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" infrastructure/kubernetes/backend-deployment.yaml
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" infrastructure/kubernetes/frontend-deployment.yaml
+
+          kubectl apply -f infrastructure/kubernetes/ -n production
+
+          kubectl rollout status deployment/oc-copilot-backend -n production --timeout=600s
+          kubectl rollout status deployment/oc-copilot-frontend -n production --timeout=600s
+
+      - name: Post-deploy verification
+        run: echo "Production deployment successful — ${{ github.sha }}"

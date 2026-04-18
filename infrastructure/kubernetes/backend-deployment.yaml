@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oc-copilot-backend
+  namespace: production
+  labels:
+    app: oc-copilot-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: oc-copilot-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  template:
+    metadata:
+      labels:
+        app: oc-copilot-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/mandeepsharma14/oc-ai-copilot/backend:IMAGE_TAG
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: oc-copilot-secrets
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits:   { memory: "2Gi",   cpu: "2000m" }
+          livenessProbe:
+            httpGet: { path: /api/v1/health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /api/v1/health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oc-copilot-backend-svc
+  namespace: production
+spec:
+  selector:
+    app: oc-copilot-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: oc-copilot-backend-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: oc-copilot-backend
+  minReplicas: 3
+  maxReplicas: 200
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oc-copilot-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+spec:
+  tls:
+    - hosts:
+        - copilot.owenscorning.com
+        - advisor.owenscorning.com
+      secretName: oc-copilot-tls
+  rules:
+    - host: copilot.owenscorning.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: { name: oc-copilot-backend-svc, port: { number: 80 } }
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: oc-copilot-frontend-svc, port: { number: 80 } }
+    - host: advisor.owenscorning.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: { name: oc-copilot-backend-svc, port: { number: 80 } }
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: oc-copilot-frontend-svc, port: { number: 80 } }

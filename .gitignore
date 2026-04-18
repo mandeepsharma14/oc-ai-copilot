@@ -1,0 +1,57 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+.npm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Terraform
+infrastructure/terraform/.terraform/
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.backup
+infrastructure/terraform/*.tfvars
+!infrastructure/terraform/*.tfvars.example
+infrastructure/terraform/.terraform.lock.hcl
+infrastructure/terraform/terraform-outputs.txt
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Secrets
+*.pem
+*.key
+*.cert
+secrets/
