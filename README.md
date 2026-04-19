@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green.svg)](https://fastapi.tiangolo.com)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
 
-> **Enterprise-scale dual-stream AI knowledge platform** for Owens Corning.
+> **Enterprise-scale dual-stream AI knowledge platform** for OC.
 > Serves 25,000+ internal employees (SOPs, safety, engineering, HR) and up to 5 million
 > external customers (product specs, pricing, installation guides).
 
