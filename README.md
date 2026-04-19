@@ -108,5 +108,5 @@ oc-ai-copilot/
 
 MIT License — see [LICENSE](LICENSE)
 
-**Built by Andy Sharma** · Sr. Engineering Leader, Owens Corning
+**Built by Andy Sharma** · Sr. Engineering Leader
 [linkedin.com/in/mandeepsharma14](https://linkedin.com/in/mandeepsharma14)
