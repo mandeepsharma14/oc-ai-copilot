@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput }     from "./ChatInput";
 import { LoadingDots }   from "@/components/shared/LoadingDots";
@@ -33,7 +33,7 @@ export function ChatWindow({ streamType, accentColor }: ChatWindowProps) {
     messagesEndRef, domainFilter, setDomainFilter,
   } = useChat({ streamType });
 
-  const [chipsHidden, setChipsHidden] = useRef(false) as any;
+  const [chipsHidden, setChipsHidden] = useState(false);
   const chips = streamType === "internal" ? INTERNAL_CHIPS : EXTERNAL_CHIPS;
   const isInt = streamType === "internal";
 
